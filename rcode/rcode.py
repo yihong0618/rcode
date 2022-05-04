@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-
-# https://github.com/chvolkmann/code-connect
+# MIT
+# fork from https://github.com/chvolkmann/code-connect
 
 import os
 import subprocess as sp
@@ -25,16 +25,14 @@ def fail(*msgs, retcode: int = 1) -> NoReturn:
 def is_socket_open(path: Path) -> bool:
     """ Returns True iff the UNIX socket exists and is currently listening. """
     try:
-        # capture output to prevent printing to stdout/stderr
-        # https://unix.stackexchange.com/a/556790/106406
         proc = sp.run(
             ["socat", "-u", "OPEN:/dev/null", f"UNIX-CONNECT:{path.resolve()}"],
-            capture_output=True,
+            stdout=sp.PIPE,
+            stderr=sp.PIPE,
         )
         return proc.returncode == 0
-    except FileNotFoundError:
+    except:
         return False
-
 
 def sort_by_access_timestamp(paths: Iterable[Path]) -> List[Tuple[float, Path]]:
     """ Returns a list of tuples (last_accessed_ts, path) sorted by the former. """
@@ -55,13 +53,6 @@ def next_open_socket(socks: Sequence[Path]) -> Path:
             + "VS Code remote SSH session before using this tool.",
         )
 
-
-def check_for_binaries() -> None:
-    """ Verifies that all required binaries are available in $PATH. """
-    if not find_executable("socat"):
-        fail('"socat" not found in $PATH, but is required for code-connect')
-
-
 def get_code_binary() -> Path:
     """ Returns the path to the most recently accessed code executable. """
 
@@ -77,7 +68,10 @@ def get_code_binary() -> Path:
         )
 
     _, code_repo = code_repos[0]
-    return code_repo / "bin" / "code"
+    path = code_repo / "bin" / "code"
+    if os.path.exists(path):
+        return path
+    return code_repo / "bin" / "remote-cli" / "code"
 
 
 def get_ipc_socket(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> Path:
@@ -96,12 +90,18 @@ def get_ipc_socket(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> Path:
     return next_open_socket(socks)
 
 
+def check_for_binaries() -> None:
+    """ Verifies that all required binaries are available in $PATH. """
+    if not find_executable("socat"):
+        fail('"socat" not found in $PATH, but is required for code-connect')
+
+
 def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
     """ Calls the code executable as a subprocess with the environment set up properly. """
-    check_for_binaries()
 
     # Fetch the path of the "code" executable
     # and determine an active IPC socket to use
+    check_for_binaries()
     code_binary = get_code_binary()
     ipc_socket = get_ipc_socket(max_idle_time)
 
@@ -112,7 +112,6 @@ def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
     # run the "code" executable with the proper environment variable set
     # stdout/stderr remain connected to the current process
     proc = sp.run(args)
-
     # return the same exit code as the wrapped process
     exit(proc.returncode)
 
