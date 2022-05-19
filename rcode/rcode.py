@@ -23,7 +23,7 @@ def fail(*msgs, retcode: int = 1) -> NoReturn:
 
 
 def is_socket_open(path: Path) -> bool:
-    """ Returns True iff the UNIX socket exists and is currently listening. """
+    """ Returns True if the UNIX socket exists and is currently listening. """
     try:
         proc = sp.run(
             ["socat", "-u", "OPEN:/dev/null", f"UNIX-CONNECT:{path.resolve()}"],
