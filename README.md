@@ -3,6 +3,9 @@
 This repo is fork from [code-connect](https://github.com/chvolkmann/code-connect)
 Thanks for this cool repo.
 
+https://user-images.githubusercontent.com/1651790/172983742-b27a3fe0-2704-4fc8-b075-a6544783443a.mp4
+
+
 ## What changed
 
 1. Support python3.6+
@@ -14,3 +17,10 @@ Thanks for this cool repo.
 2. install socat like: (sudo yum install socat)
 3. just `rcode file` like your VSCode `code .`
 
+> Note:
+> - Be sure to [connect to the remote host](https://code.visualstudio.com/docs/remote/ssh#_connect-to-a-remote-host) first before typing any `rcode` in the terminal
+> - We may want to add `~/.local/bin` in to your `$PATH` in your `~/.zshrc` or `~/.bashrc` to enable `rcode` being resolved properly
+> ```diff
+> - export PATH=$PATH:/usr/local/go/bin
+> + export PATH=$PATH:/usr/local/go/bin:~/.local/bin
+> ```
