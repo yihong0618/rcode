@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "0.0.1"
+VERSION = "0.1.0"
 
 setup(
     name="rcode",
@@ -13,6 +13,9 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=True,
+    install_requires=[
+        'sshconf'
+    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

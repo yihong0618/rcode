@@ -9,13 +9,15 @@ https://user-images.githubusercontent.com/1651790/172983742-b27a3fe0-2704-4fc8-b
 ## What changed
 
 1. Support python3.6+
-2. PYPI
+2. PyPI
+3. support local open remote dir command `rcode ${ssh_name} ${ssh_dir}`
 
 ## INFO
 
 1. pip3 install rcode (or clone it pip3 install .)
 2. install socat like: (sudo yum install socat)
 3. just `rcode file` like your VSCode `code .`
+4. local open remote use rcode if you use `.ssh/config` --> `rcode remote_ssh ~/test`
 
 > Note:
 > - Be sure to [connect to the remote host](https://code.visualstudio.com/docs/remote/ssh#_connect-to-a-remote-host) first before typing any `rcode` in the terminal
