@@ -60,8 +60,7 @@ def next_open_socket(socks: Sequence[Path]) -> Path:
 
 def is_remote_vscode() -> bool:
     code_repos = Path.home().glob(".vscode-server/bin/*")
-    is_ssh = os.getenv('SSH_CLIENT')
-    return len(list(code_repos)) > 0 and is_ssh
+    return len(list(code_repos)) > 0 and os.getenv('SSH_CLIENT')
 
 
 def get_code_binary() -> Path:
