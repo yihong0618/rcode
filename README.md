@@ -8,9 +8,8 @@ https://user-images.githubusercontent.com/1651790/172983742-b27a3fe0-2704-4fc8-b
 
 ## What changed
 
-1. Support python3.6+
-2. PyPI
-3. support local open remote dir command `rcode ${ssh_name} ${ssh_dir}`
+1. PyPI
+2. support local open remote dir command `rcode ${ssh_name} ${ssh_dir}`
 
 ## INFO
 
