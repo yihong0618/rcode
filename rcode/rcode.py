@@ -130,8 +130,20 @@ def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
         exit(proc.returncode)
     else:
         # run local to open remote
+        rcode_home = Path.home() / ".rcode" 
         ssh_remote = "vscode-remote://ssh-remote+{remote_name}{remote_dir}"
-        assert len(args) == 3
+        if args[1] == "-l" or args[1] == "--latest":
+            if os.path.exists(rcode_home):
+                with open(rcode_home) as f:
+                    if l := list(f.read().splitlines()):
+                        ssh_remote_latest = l[-1]
+                        proc = sp.run(["code", "--folder-uri", ssh_remote_latest])
+                        exit(proc.returncode)
+                    else:
+                        print("Not use rcode before")
+                        return
+        else:
+            assert len(args) == 3
         sshs = read_ssh_config(expanduser("~/.ssh/config"))
         hosts = sshs.hosts()
         remote_name = args[1]
@@ -144,6 +156,8 @@ def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
             # replace with the remote ~
             dir_name = str(args[2]).replace(local_home_dir, f"/home/{user_name}")
         ssh_remote = ssh_remote.format(remote_name=remote_name, remote_dir=dir_name) 
+        with open(rcode_home, "a") as f:
+            f.write(ssh_remote + str(os.linesep))
         proc = sp.run(["code", "--folder-uri", ssh_remote])
         exit(proc.returncode)
 
