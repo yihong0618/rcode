@@ -18,6 +18,7 @@ https://user-images.githubusercontent.com/1651790/172983742-b27a3fe0-2704-4fc8-b
 3. just `rcode file` like your VSCode `code .`
 4. local open remote use rcode if you use `.ssh/config` --> `rcode remote_ssh ~/test`
 5. local open latest remote `.ssh/config` --> `rcode -l or rcode --latest`
+6. add shortcut_name `rcode s ~/abc -sn abc` then you can use `rcode -os abc` to open this dir quickly
 
 > Note:
 > - Be sure to [connect to the remote host](https://code.visualstudio.com/docs/remote/ssh#_connect-to-a-remote-host) first before typing any `rcode` in the terminal

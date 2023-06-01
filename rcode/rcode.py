@@ -2,16 +2,16 @@
 # MIT
 # fork from https://github.com/chvolkmann/code-connect
 
+import argparse
 import os
 import subprocess as sp
-import sys
 import time
 from distutils.spawn import find_executable
 from pathlib import Path
 from os.path import expanduser
 from typing import Iterable, List, NoReturn, Sequence, Tuple
 
-from sshconf import read_ssh_config # type: ignore
+from sshconf import read_ssh_config  # type: ignore
 
 # IPC sockets will be filtered based when they were last accessed
 # This gives an upper bound in seconds to the timestamps
@@ -60,7 +60,10 @@ def next_open_socket(socks: Sequence[Path]) -> Path:
 
 def is_remote_vscode() -> bool:
     code_repos = Path.home().glob(".vscode-server/bin/*")
-    return len(list(code_repos)) > 0 and os.getenv('SSH_CLIENT')
+    return len(list(code_repos)) > 0 and os.getenv("SSH_CLIENT")
+
+
+IS_REMOTE_VSCODE = is_remote_vscode()
 
 
 def get_code_binary() -> Path:
@@ -108,19 +111,18 @@ def check_for_binaries() -> None:
         fail('"socat" not found in $PATH, but is required for code-connect')
 
 
-def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
-    """Calls the code executable as a subprocess with the environment set up properly."""
-
+def run_remote(dir_name, max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
+    if not dir_name:
+        raise Exception("need dir name here")
     # Fetch the path of the "code" executable
     # and determine an active IPC socket to use
-    is_remote = is_remote_vscode()
-    args = sys.argv.copy()
-    if is_remote:
+    if IS_REMOTE_VSCODE:
         check_for_binaries()
         code_binary = get_code_binary()
         ipc_socket = get_ipc_socket(max_idle_time)
 
-        args[0] = str(code_binary)
+        args = [str(code_binary)]
+        args.append(dir_name)
         os.environ["VSCODE_IPC_HOOK_CLI"] = str(ipc_socket)
 
         # run the "code" executable with the proper environment variable set
@@ -128,38 +130,102 @@ def main(max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn:
         proc = sp.run(args)
         # return the same exit code as the wrapped process
         exit(proc.returncode)
-    else:
-        # run local to open remote
-        rcode_home = Path.home() / ".rcode" 
-        ssh_remote = "vscode-remote://ssh-remote+{remote_name}{remote_dir}"
-        if args[1] == "-l" or args[1] == "--latest":
-            if os.path.exists(rcode_home):
-                with open(rcode_home) as f:
-                    if l := list(f.read().splitlines()):
-                        ssh_remote_latest = l[-1]
-                        proc = sp.run(["code", "--folder-uri", ssh_remote_latest])
-                        exit(proc.returncode)
-                    else:
-                        print("Not use rcode before")
-                        return
+
+
+def run_loacl(
+    dir_name,
+    remote_name=None,
+    is_latest=False,
+    shortcut_name=None,
+    open_shortcut_name=None,
+):
+    # run local to open remote
+    rcode_home = Path.home() / ".rcode"
+    ssh_remote = "vscode-remote://ssh-remote+{remote_name}{remote_dir}"
+    rcode_used_list = []
+    if os.path.exists(rcode_home):
+        with open(rcode_home) as f:
+            rcode_used_list = list(f.read().splitlines())
+    if is_latest:
+        if rcode_used_list:
+            ssh_remote_latest = rcode_used_list[-1].split(",")[-1].strip()
+            proc = sp.run(["code", "--folder-uri", ssh_remote_latest])
+            exit(proc.returncode)
         else:
-            assert len(args) == 3
-        sshs = read_ssh_config(expanduser("~/.ssh/config"))
-        hosts = sshs.hosts()
-        remote_name = args[1]
-        if remote_name not in hosts:
-            raise Exception("Please config your .ssh config to use this")
-        dir_name = args[2]
-        local_home_dir = expanduser("~")
-        if args[2].startswith(local_home_dir):
-            user_name = sshs.host(remote_name).get("user", "root")
-            # replace with the remote ~
-            dir_name = str(args[2]).replace(local_home_dir, f"/home/{user_name}")
-        ssh_remote = ssh_remote.format(remote_name=remote_name, remote_dir=dir_name) 
-        with open(rcode_home, "a") as f:
-            f.write(ssh_remote + str(os.linesep))
-        proc = sp.run(["code", "--folder-uri", ssh_remote])
-        exit(proc.returncode)
+            print("Not use rcode before, just use it once")
+            return
+    if open_shortcut_name and rcode_used_list:
+        for l in rcode_used_list:
+            name, server = l.split(",")
+            if open_shortcut_name.strip() == name.strip():
+                proc = sp.run(["code", "--folder-uri", server.strip()])
+                # then add it to the latest
+                with open(rcode_home, "a") as f:
+                    f.write(f"latest,{server}{str(os.linesep)}")
+                exit(proc.returncode)
+        else:
+            raise Exception(f"no short_cut name in your added")
+
+    sshs = read_ssh_config(expanduser("~/.ssh/config"))
+    hosts = sshs.hosts()
+    remote_name = remote_name
+    if remote_name not in hosts:
+        raise Exception("Please config your .ssh config to use this")
+    dir_name = dir_name
+    local_home_dir = expanduser("~")
+    if dir_name.startswith(local_home_dir):
+        user_name = sshs.host(remote_name).get("user", "root")
+        # replace with the remote ~
+        dir_name = str(dir_name).replace(local_home_dir, f"/home/{user_name}")
+    ssh_remote = ssh_remote.format(remote_name=remote_name, remote_dir=dir_name)
+    with open(rcode_home, "a") as f:
+        if shortcut_name:
+            f.write(f"{shortcut_name},{ssh_remote}{str(os.linesep)}")
+        else:
+            f.write(f"latest,{ssh_remote}{str(os.linesep)}")
+
+    proc = sp.run(["code", "--folder-uri", ssh_remote])
+    exit(proc.returncode)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dir", help="dir_name", nargs="?")
+    parser.add_argument("host", help="ssh hostname", nargs="?")
+    parser.add_argument(
+        "-l",
+        "--latest",
+        dest="is_latest",
+        action="store_true",
+        help="if is_latest",
+    )
+    parser.add_argument(
+        "-sn",
+        "--shortcut_name",
+        dest="shortcut_name",
+        help="add shortcut name to this",
+        type=str,
+        required=False,
+    )
+    parser.add_argument(
+        "-os",
+        "--open_shortcut",
+        dest="open_shortcut",
+        help="if ",
+        type=str,
+        required=False,
+    )
+    options = parser.parse_args()
+    if IS_REMOTE_VSCODE:
+        run_remote(options.dir)
+    else:
+        run_loacl(
+            options.host,
+            options.dir,
+            is_latest=options.is_latest,
+            shortcut_name=options.shortcut_name,
+            open_shortcut_name=options.open_shortcut,
+        )
 
 
 if __name__ == "__main__":
