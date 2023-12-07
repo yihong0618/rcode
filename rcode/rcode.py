@@ -133,11 +133,11 @@ def run_remote(dir_name, max_idle_time: int = DEFAULT_MAX_IDLE_TIME) -> NoReturn
 
 
 def run_loacl(
-    dir_name,
-    remote_name=None,
-    is_latest=False,
-    shortcut_name=None,
-    open_shortcut_name=None,
+        dir_name,
+        remote_name=None,
+        is_latest=False,
+        shortcut_name=None,
+        open_shortcut_name=None,
 ):
     # run local to open remote
     rcode_home = Path.home() / ".rcode"
@@ -189,7 +189,16 @@ def run_loacl(
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        # %(prog)s <host> <dir>
+        usage="""
+        rcode <host> <dir>
+        """,
+        description="""
+        just rcode \'file\' like your VSCode \'code\' .
+        but you should config your ~/.ssh/config first
+        """
+    )
     parser.add_argument("dir", help="dir_name", nargs="?")
     parser.add_argument("host", help="ssh hostname", nargs="?")
     parser.add_argument(
