@@ -1,6 +1,6 @@
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-VERSION = "0.4.0"
+VERSION = "0.4.1"
 
 setup(
     name="rcode",
