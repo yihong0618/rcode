@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-VERSION = "0.4.1"
+VERSION = "0.5.0"
 
 setup(
     name="rcode",
@@ -21,9 +21,12 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Software Development :: Libraries",
     ],
     entry_points={
-        "console_scripts": ["rcode = rcode.rcode:main"],
+        "console_scripts": ["rcode = rcode.rcode:main", "rcursor = rcode.rcode:cmain"],
     },
 )
