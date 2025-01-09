@@ -7,6 +7,7 @@ import os
 import subprocess as sp
 import time
 import subprocess
+import sys
 from distutils.spawn import find_executable
 from functools import partial
 from pathlib import Path
@@ -203,13 +204,14 @@ def run_loacl(
     rcode_home = Path.home() / ".rcode"
     ssh_remote = "vscode-remote://ssh-remote+{remote_name}{remote_dir}"
     rcode_used_list = []
+    is_win = sys.platform == "win32"
     if os.path.exists(rcode_home):
         with open(rcode_home) as f:
-            rcode_used_list = list(f.read().splitlines())
+            rcode_used_list = list(filter(len, f.read().splitlines()))
     if is_latest:
         if rcode_used_list:
             ssh_remote_latest = rcode_used_list[-1].split(",")[-1].strip()
-            proc = sp.run([bin_name, "--folder-uri", ssh_remote_latest])
+            proc = sp.run([bin_name, "--folder-uri", ssh_remote_latest], shell=is_win)
             exit(proc.returncode)
         else:
             print("Not use rcode before, just use it once")
@@ -218,7 +220,7 @@ def run_loacl(
         for l in rcode_used_list:
             name, server = l.split(",")
             if open_shortcut_name.strip() == name.strip():
-                proc = sp.run([bin_name, "--folder-uri", server.strip()])
+                proc = sp.run([bin_name, "--folder-uri", server.strip()], shell=is_win)
                 # then add it to the latest
                 with open(rcode_home, "a") as f:
                     f.write(f"latest,{server}{str(os.linesep)}")
@@ -244,7 +246,7 @@ def run_loacl(
         else:
             f.write(f"latest,{ssh_remote}{str(os.linesep)}")
 
-    proc = sp.run([bin_name, "--folder-uri", ssh_remote])
+    proc = sp.run([bin_name, "--folder-uri", ssh_remote], shell=is_win)
     exit(proc.returncode)
 
 
