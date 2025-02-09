@@ -233,7 +233,7 @@ def run_loacl(
     remote_name = remote_name
     if remote_name not in hosts:
         raise Exception("Please config your .ssh config to use this")
-    dir_name = dir_name
+    dir_name = expanduser(dir_name)
     local_home_dir = expanduser("~")
     if dir_name.startswith(local_home_dir):
         user_name = sshs.host(remote_name).get("user", "root")
