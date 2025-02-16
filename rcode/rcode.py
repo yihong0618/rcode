@@ -8,7 +8,8 @@ import subprocess as sp
 import time
 import subprocess
 import sys
-from distutils.spawn import find_executable
+# from distutils.spawn import find_executable
+from shutil import which
 from functools import partial
 from pathlib import Path
 from os.path import expanduser
